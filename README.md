@@ -10,6 +10,9 @@ This advanced project is a comprehensive real-time sensor data monitoring system
 - **Manual and Automatic Device Control**
 - **LED Indicator System**
 
+## Project Frontend
+![s1](https://github.com/user-attachments/assets/68e551da-fe88-4a4c-ac55-c454bbfcdd53)
+
 ## Project Snapshots
 
 ![PCB Design](https://github.com/user-attachments/assets/a1996713-70c3-48d4-8944-9e4949e2b307)
@@ -29,6 +32,9 @@ This advanced project is a comprehensive real-time sensor data monitoring system
 - [Device Control System](#device-control-system)
 - [Installation](#installation)
 - [Usage](#usage)
+
+## Project Intro
+[daq.webm](https://github.com/user-attachments/assets/653e0ed0-3f4a-47c9-9a5c-95ba80689f10)
 
 ## Introduction
 
