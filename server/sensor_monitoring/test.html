@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sensor Monitoring</title>
+    <script>
+        const socket = new WebSocket('ws://localhost:8000/ws/sensors/');
+
+        socket.onopen = function(e) {
+            console.log('WebSocket connection established');
+        };
+
+        socket.onmessage = function(event) {
+            console.log('WebSocket message received:', event);
+            const data = JSON.parse(event.data);
+            console.log('Sensor data:', data);
+
+            // Optionally display the data in the webpage
+            document.getElementById('sensor-data').innerText = `Gas Level: ${data.gas_level}, Timestamp: ${data.timestamp}`;
+        };
+
+        socket.onerror = function(error) {
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onclose = function(e) {
+            console.log('WebSocket connection closed', e);
+        };
+    </script>
+</head>
+<body>
+    <h1>Sensor Monitoring</h1>
+    <div id="sensor-data">Waiting for data...</div>
+</body>
+</html>
