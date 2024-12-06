@@ -1,0 +1,60 @@
+/* Container for the entire DataTable */
+.data-table-container {
+    width: 80%;
+    margin: 20px auto;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+  }
+  
+  /* Styling the table itself */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+  }
+  
+  .data-table th, .data-table td {
+    padding: 12px 15px;
+    text-align: left;
+  }
+  
+  /* Styling for table headers */
+  .data-table th {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+  
+  /* Row styling */
+  .data-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  /* Hover effect for rows */
+  .data-table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* Styling for table data */
+  .data-table td {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  /* 'Loading...' text style */
+  .data-table td {
+    color: #ff6600; /* Color for "Loading..." text */
+    font-style: italic;
+  }
+  
+  /* Heading style */
+  h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  

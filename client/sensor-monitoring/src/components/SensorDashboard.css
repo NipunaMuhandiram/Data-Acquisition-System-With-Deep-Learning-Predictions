@@ -1,0 +1,234 @@
+
+
+/* .dashboard-container {
+    height: 35em;
+    background-color: #009baf; 
+    
+    margin-top: 2em; 
+    margin-bottom: 2em;
+    border-radius: 2em;
+    margin-left: 2em;
+    margin-right: 2em;
+    display: flex;
+}
+
+.navigation-container {
+    background-color: #b939b3;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); 
+    padding: 10px;
+    width: 15em;
+    border-top-left-radius: 2em;
+    border-bottom-left-radius: 2em;
+}
+.navlist{
+    margin-top: 5em;
+}
+.avatar{
+    margin-left: 1em;
+    margin-top: 1em;
+    display: flex;
+    align-items: center; 
+    gap: 10px;
+    
+}
+.unselectable-text {
+    user-select: none; 
+  }
+
+.chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    flex-grow: 1;
+}
+
+.sensor-card {
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background-color: #e70d73;
+    border-radius: 20px;
+}
+
+.sensor-card .MuiCardContent-root {
+    padding: 30px;
+    text-align: center;
+}
+
+.MuiTypography-h5 {
+    font-weight: bold;
+    margin-bottom: 20px;
+} */
+
+
+
+
+
+
+
+* {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    outline: transparent;
+    box-sizing: border-box;
+    text-decoration: none;
+  }
+  
+  body {
+    height: 100vh;
+    background-color: #14172de8;  
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .dashboard-container {
+    /* height: 35em; */
+    background: linear-gradient(135deg, #161D6F, #0B2F9F, #98DED9, #C7FFD8); 
+    margin-top: 2em; 
+    margin-bottom: 2em;
+    border-radius: 40px;
+    display: flex;
+    width: 100em ;
+    max-width: 1200px;
+    min-height: 500px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  .avatar {
+    margin-left: 1em;
+    margin-top: 1em;
+    display: flex;
+    align-items: center; 
+    gap: 10px;
+  }
+  
+  .unselectable-text {
+    user-select: none; 
+  }
+  
+  .chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    flex-grow: 1;
+     
+  }
+  
+  .sensor-card {
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background-color: #98DED9; 
+    border-radius: 2em;
+  }
+  
+  .sensor-card .MuiCardContent-root {
+    padding: 30px;
+    text-align: center;
+  }
+  
+  .MuiTypography-h5 {
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .navigation-container {
+    padding: 20px;
+    background-color: #c2c2c2e0;
+    border-radius: 40px;
+    width: 250px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-top-right-radius: 0em;
+    border-bottom-right-radius: 0em;
+    font-size: 20px;
+    height: 29em;
+    max-height: 30em;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #1691d8 #1923a5;
+    scroll-behavior: smooth;
+  }
+
+  
+
+  
+  .avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .unselectable-text {
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .navlist {
+    margin-top: 20px;
+    /* overflow-y: auto; */
+  }
+  
+  .navlist .MuiListItemButton-root {
+    margin-bottom: 10px;
+    border-radius: 2em;
+    transition: background-color 0.3s ease;
+  }
+  
+  .navlist .MuiListItemButton-root:hover {
+    background-color: #ffffffde;
+  }
+  
+  .sidebar {
+    margin-top: 3em;
+  }
+  
+
+
+
+
+.table-container {
+    overflow: hidden; 
+
+  }
+  
+  .table-head th {
+    font-weight: bold; 
+    text-align: left; 
+    padding: 16px;
+  }
+  
+ 
+  .table-body td {
+    padding: 12px; 
+
+  }
+  
+  .table-body td:last-child {
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+  }
+  
+
+  /* Add this to your CSS file (e.g., SensorDataTable.css) */
+
+.glow {
+    animation: glow-animation 0.8s ease-in-out;
+  }
+  
+  @keyframes glow-animation {
+    0% {
+      box-shadow: 0 0 10px rgba(1, 13, 122, 0.8), 0 0 20px rgba(47, 1, 173, 0.801);
+      background-color: rgba(0, 110, 255, 0.3);
+    }
+    100% {
+      box-shadow: none;
+      background-color: transparent;
+    }
+  }
+  
