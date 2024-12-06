@@ -1,4 +1,4 @@
-# Real-Time Sensor Monitoring System with Deep Learning Temperature Predictions
+# Real-Time Sensor Data Aquisition System with Deep Learning Temperature Predictions
 
 ## Project Overview
 
