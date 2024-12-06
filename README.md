@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This advanced project is a comprehensive real-time sensor data monitoring system featuring:
+This is a comprehensive real-time sensor data monitoring system featuring:
 - **React** Frontend
 - **Django** Backend
 - **AVR ATmega328P** Microcontroller
@@ -38,7 +38,7 @@ This advanced project is a comprehensive real-time sensor data monitoring system
 
 ## Introduction
 
-This project integrates sensor data collection, real-time monitoring, advanced temperature predictions, and comprehensive device control using an **ATmega328P** microcontroller, **Django** backend, **React** frontend, and an **LSTM neural network**. By leveraging an **ATmega328P** microcontroller, **Django** backend, **React** frontend, and an **LSTM neural network**, we provide a comprehensive solution for sensor data analysis, forecasting, and device management.
+This project integrates sensor data collection, real-time monitoring, advanced temperature predictions, and comprehensive device control using an **ATmega328P** microcontroller, **Django** backend, **React** frontend, and an **LSTM neural network**. By leveraging an **ATmega328P** microcontroller, **Django** backend, **React** frontend, and an **LSTM neural network**, This Project provides a comprehensive solution for sensor data analysis, forecasting, and device management.
 
 ## Schematic
 ![System Schematic](https://github.com/user-attachments/assets/40268e44-2f6b-4749-bd0a-a4857c508cce)
