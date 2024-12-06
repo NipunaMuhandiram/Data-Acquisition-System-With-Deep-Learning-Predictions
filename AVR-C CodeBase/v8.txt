@@ -1,0 +1,228 @@
+#define F_CPU 8000000UL  // 8 MHz internal oscillator
+#define BAUD 9600
+#define MYUBRR F_CPU/16/BAUD-1
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define F_SCL 100000UL  // I2C SCL frequency (100 kHz)
+#define BMP280_ADDR 0x76  // BMP280 I2C address
+
+// Global variables for calibration data and temperature
+struct {
+	uint16_t dig_T1;
+	int16_t dig_T2;
+	int16_t dig_T3;
+	uint16_t dig_P1;
+	int16_t dig_P2;
+	int16_t dig_P3;
+	int16_t dig_P4;
+	int16_t dig_P5;
+	int16_t dig_P6;
+	int16_t dig_P7;
+	int16_t dig_P8;
+	int16_t dig_P9;
+} bmp280_cal;
+
+// Variable to hold fine temperature value
+int32_t t_fine;
+
+// UART functions (unchanged)
+void uart_init(unsigned int ubrr) {
+	UBRR0H = (unsigned char)(ubrr >> 8);
+	UBRR0L = (unsigned char)ubrr;
+	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+}
+
+void uart_transmit(unsigned char data) {
+	while (!(UCSR0A & (1 << UDRE0)));
+	UDR0 = data;
+}
+
+void uart_send_string(const char* str) {
+	while (*str) {
+		uart_transmit(*str++);
+	}
+}
+
+// I2C functions (unchanged)
+void i2c_init(void) {
+	TWSR = 0x00;
+	TWBR = ((F_CPU / F_SCL) - 16) / 2;
+}
+
+void i2c_start(void) {
+	TWCR = (1 << TWSTA) | (1 << TWEN) | (1 << TWINT);
+	while (!(TWCR & (1 << TWINT)));
+}
+
+void i2c_stop(void) {
+	TWCR = (1 << TWSTO) | (1 << TWEN) | (1 << TWINT);
+}
+
+void i2c_write(uint8_t data) {
+	TWDR = data;
+	TWCR = (1 << TWEN) | (1 << TWINT);
+	while (!(TWCR & (1 << TWINT)));
+}
+
+uint8_t i2c_read_ack(void) {
+	TWCR = (1 << TWEN) | (1 << TWINT) | (1 << TWEA);
+	while (!(TWCR & (1 << TWINT)));
+	return TWDR;
+}
+
+uint8_t i2c_read_nack(void) {
+	TWCR = (1 << TWEN) | (1 << TWINT);
+	while (!(TWCR & (1 << TWINT)));
+	return TWDR;
+}
+
+void i2c_start_transmission(uint8_t address) {
+	i2c_start();
+	i2c_write(address);
+}
+
+// BMP280 functions
+void bmp280_init(void) {
+	i2c_start_transmission(BMP280_ADDR << 1);  // Write mode
+	i2c_write(0xF4);  // Control register
+	i2c_write(0x27);  // Normal mode, temp and pressure oversampling 1x
+	i2c_stop();
+	
+	// Read calibration data
+	i2c_start_transmission(BMP280_ADDR << 1);
+	i2c_write(0x88); // Start address for calibration data
+	i2c_stop();
+
+	i2c_start_transmission((BMP280_ADDR << 1) | 1);  // Read mode
+	bmp280_cal.dig_T1 = i2c_read_ack() | (i2c_read_ack() << 8); // T1
+	bmp280_cal.dig_T2 = i2c_read_ack() | (i2c_read_ack() << 8); // T2
+	bmp280_cal.dig_T3 = i2c_read_ack() | (i2c_read_ack() << 8); // T3
+	bmp280_cal.dig_P1 = i2c_read_ack() | (i2c_read_ack() << 8); // P1
+	bmp280_cal.dig_P2 = i2c_read_ack() | (i2c_read_ack() << 8); // P2
+	bmp280_cal.dig_P3 = i2c_read_ack() | (i2c_read_ack() << 8); // P3
+	bmp280_cal.dig_P4 = i2c_read_ack() | (i2c_read_ack() << 8); // P4
+	bmp280_cal.dig_P5 = i2c_read_ack() | (i2c_read_ack() << 8); // P5
+	bmp280_cal.dig_P6 = i2c_read_ack() | (i2c_read_ack() << 8); // P6
+	bmp280_cal.dig_P7 = i2c_read_ack() | (i2c_read_ack() << 8); // P7
+	bmp280_cal.dig_P8 = i2c_read_ack() | (i2c_read_ack() << 8); // P8
+	bmp280_cal.dig_P9 = i2c_read_nack() | (i2c_read_nack() << 8); // P9
+	i2c_stop();
+}
+
+float bmp280_read_temperature(void) {
+	uint32_t raw_temp = 0;
+
+	i2c_start_transmission(BMP280_ADDR << 1);  // Write mode
+	i2c_write(0xFA);  // Temperature MSB register
+	i2c_stop();
+
+	i2c_start_transmission((BMP280_ADDR << 1) | 1);  // Read mode
+	raw_temp = (i2c_read_ack() << 8);  // Read MSB
+	raw_temp |= i2c_read_nack();  // Read LSB
+	i2c_stop();
+
+	// Calculate temperature
+	//int32_t var1 = ((((raw_temp >> 3) - ((int32_t)bmp280_cal.dig_T1 << 1))) * ((int32_t)bmp280_cal.dig_T2)) >> 11) + (((((raw_temp >> 4) - (int32_t)bmp280_cal.dig_T1) * ((raw_temp >> 4) - (int32_t)bmp280_cal.dig_T1)) >> 12) * (int32_t)bmp280_cal.dig_T3) >> 14);
+	int32_t var1 = (((((raw_temp >> 3) - ((int32_t)bmp280_cal.dig_T1 << 1)) * (int32_t)bmp280_cal.dig_T2) >> 11) +
+	(((((raw_temp >> 4) - (int32_t)bmp280_cal.dig_T1) * ((raw_temp >> 4) - (int32_t)bmp280_cal.dig_T1) >> 12) * (int32_t)bmp280_cal.dig_T3) >> 14));
+
+	t_fine = var1;
+	float temperature = (t_fine * 5 + 128) >> 8;  // t_fine is in 1/100 degrees Celsius
+
+	return temperature / 100.0;  // Convert to Celsius
+}
+
+uint32_t bmp280_read_pressure(void) {
+	uint32_t raw_pressure = 0;
+
+	// Start communication to BMP280
+	i2c_start_transmission(BMP280_ADDR << 1);  // Write mode
+	i2c_write(0xF7);  // Pressure MSB register address
+	i2c_stop();
+
+	// Read pressure registers (MSB, LSB, XLSB)
+	i2c_start_transmission((BMP280_ADDR << 1) | 1);  // Read mode
+	raw_pressure = (i2c_read_ack() << 12);  // MSB (8 bits) shifted by 12 bits
+	raw_pressure |= (i2c_read_ack() << 4);  // LSB (8 bits) shifted by 4 bits
+	raw_pressure |= (i2c_read_nack() >> 4);  // XLSB (only top 4 bits are relevant)
+	i2c_stop();
+
+	// Apply compensation to raw pressure using calibration data
+	int64_t var1, var2, p;
+	var1 = ((int64_t)t_fine) - 128000;
+	var2 = var1 * var1 * (int64_t)bmp280_cal.dig_P6;
+	var2 = var2 + ((var1 * (int64_t)bmp280_cal.dig_P5) << 17);
+	var2 = var2 + (((int64_t)bmp280_cal.dig_P4) << 35);
+	var1 = ((var1 * var1 * (int64_t)bmp280_cal.dig_P3) >> 8) + ((var1 * (int64_t)bmp280_cal.dig_P2) << 12);
+	var1 = (((((int64_t)1) << 47) + var1)) * ((int64_t)bmp280_cal.dig_P1) >> 33;
+
+	if (var1 == 0) {
+		return 0;  // avoid division by zero
+	}
+
+	p = 1048576 - raw_pressure;
+	p = (((p << 31) - var2) * 3125) / var1;
+	var1 = (((int64_t)bmp280_cal.dig_P9) * (p >> 13) * (p >> 13)) >> 25;
+	var2 = (((int64_t)bmp280_cal.dig_P8) * p) >> 19;
+
+	p = ((p + var1 + var2) >> 8) + (((int64_t)bmp280_cal.dig_P7) << 4);
+	return (uint32_t)p;
+}
+
+void float_to_string(float num, char* buffer, int precision) {
+	int whole_part = (int)num;
+	float fractional_part = num - whole_part;
+
+	// Convert whole part to string
+	itoa(whole_part, buffer, 10);  // Convert the integer part
+	char* ptr = buffer + strlen(buffer);  // Move pointer to the end of the string
+
+	*ptr++ = '.';  // Add decimal point
+
+	// Convert fractional part to string
+	for (int i = 0; i < precision; i++) {
+		fractional_part *= 10;
+		whole_part = (int)fractional_part;
+		*ptr++ = whole_part + '0';  // Convert to character
+		fractional_part -= whole_part;
+	}
+	*ptr = '\0';  // Null-terminate the string
+}
+
+int main(void) {
+	// Initialize UART and I2C
+	uart_init(MYUBRR);
+	i2c_init();
+	bmp280_init();
+
+	char buffer[30];  // Increased buffer size
+
+	while (1) {
+		float temp = bmp280_read_temperature();
+		uint32_t pressure = bmp280_read_pressure();
+
+		uart_send_string("\r\n");
+
+		// Convert raw temperature to string
+		float_to_string(temp, buffer, 2);  // Convert with 2 decimal places
+		uart_send_string("Temperature: ");
+		uart_send_string(buffer);
+		uart_send_string(" C\r\n");
+
+		// Convert pressure to string
+		itoa(pressure, buffer, 10);  // Use itoa to convert pressure
+		uart_send_string("Pressure: ");
+		uart_send_string(buffer);
+		uart_send_string(" Pa\r\n");
+
+		_delay_ms(1000);  // Delay 1 second between readings
+	}
+}
+// temp correct

@@ -1,0 +1,166 @@
+#define F_CPU 8000000UL  // 8 MHz internal oscillator
+#define BAUD 9600
+#define MYUBRR F_CPU/16/BAUD-1
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <stdlib.h>  // For itoa (integer to ASCII conversion)
+#include <stdio.h>   // For sprintf
+
+#define F_SCL 100000UL  // I2C SCL frequency (100 kHz)
+#define BMP280_ADDR 0x76  // BMP280 I2C address
+char buffer[30];  // Increased buffer size
+
+void float_to_string(float num, char* buffer, int precision) {
+	int whole_part = (int)num;
+	float fractional_part = num - whole_part;
+
+	// Convert whole part to string
+	itoa(whole_part, buffer, 10);  // Convert the integer part
+	char* ptr = buffer + strlen(buffer);  // Move pointer to the end of the string
+
+	*ptr++ = '.';  // Add decimal point
+
+	// Convert fractional part to string
+	for (int i = 0; i < precision; i++) {
+		fractional_part *= 10;
+		whole_part = (int)fractional_part;
+		*ptr++ = whole_part + '0';  // Convert to character
+		fractional_part -= whole_part;
+	}
+	*ptr = '\0';  // Null-terminate the string
+}
+
+// UART functions
+void uart_init(unsigned int ubrr) {
+	UBRR0H = (unsigned char)(ubrr >> 8);
+	UBRR0L = (unsigned char)ubrr;
+	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);  // 8 data bits, 1 stop bit
+}
+
+void uart_transmit(unsigned char data) {
+	while (!(UCSR0A & (1 << UDRE0)));
+	UDR0 = data;
+}
+
+void uart_send_string(const char* str) {
+	while (*str) {
+		uart_transmit(*str++);
+	}
+}
+
+// I2C functions
+void i2c_init(void) {
+	TWSR = 0x00;  // Prescaler = 1
+	TWBR = ((F_CPU / F_SCL) - 16) / 2;  // Set I2C clock rate to 100kHz
+}
+
+void i2c_start(void) {
+	TWCR = (1 << TWSTA) | (1 << TWEN) | (1 << TWINT);
+	while (!(TWCR & (1 << TWINT)));  // Wait for TWINT to be set
+}
+
+void i2c_stop(void) {
+	TWCR = (1 << TWSTO) | (1 << TWEN) | (1 << TWINT);
+}
+
+void i2c_write(uint8_t data) {
+	TWDR = data;
+	TWCR = (1 << TWEN) | (1 << TWINT);
+	while (!(TWCR & (1 << TWINT)));  // Wait for TWINT to be set
+}
+
+uint8_t i2c_read_ack(void) {
+	TWCR = (1 << TWEN) | (1 << TWINT) | (1 << TWEA);
+	while (!(TWCR & (1 << TWINT)));
+	return TWDR;
+}
+
+uint8_t i2c_read_nack(void) {
+	TWCR = (1 << TWEN) | (1 << TWINT);
+	while (!(TWCR & (1 << TWINT)));
+	return TWDR;
+}
+
+void i2c_start_transmission(uint8_t address) {
+	i2c_start();
+	i2c_write(address);
+}
+
+// BMP280 functions
+void bmp280_init(void) {
+	i2c_start_transmission(BMP280_ADDR << 1);  // Write mode
+	i2c_write(0xF4);  // Control register
+	i2c_write(0x27);  // Normal mode, temp and pressure oversampling 1x
+	i2c_stop();
+}
+
+float bmp280_read_temperature(void) {
+	uint16_t temp = 0;
+
+	i2c_start_transmission(BMP280_ADDR << 1);  // Write mode
+	i2c_write(0xFA);  // Temperature MSB register
+	i2c_stop();
+
+	i2c_start_transmission((BMP280_ADDR << 1) | 1);  // Read mode
+	temp = (i2c_read_ack() << 8);  // Read MSB
+	temp |= i2c_read_nack();  // Read LSB
+	i2c_stop();
+
+	float tempx = temp / 1200.0; 
+	
+	float_to_string(tempx, buffer, 2);  // Convert with 2 decimal places
+	uart_send_string("Temperature: ");
+	uart_send_string(buffer);
+	uart_send_string(" C\r\n");
+	
+	return tempx;
+}
+
+float bmp280_read_pressure(void) {
+	
+	uint16_t pressure = 0;
+
+	i2c_start_transmission(BMP280_ADDR << 1);  // Write mode
+	i2c_write(0xF7);  // Pressure MSB register
+	i2c_stop();
+
+	i2c_start_transmission((BMP280_ADDR << 1) | 1);  // Read mode
+	pressure = (i2c_read_ack() << 8);  // Read MSB
+	pressure |= i2c_read_nack();  // Read LSB
+	i2c_stop();
+	
+	float real_pressure = 1013 + ((pressure / 25.3 )/ 1013 ) ;
+	
+	// Send pressure
+	float_to_string(real_pressure, buffer, 2);
+	uart_send_string("Pressure: ");
+	uart_send_string(buffer);
+	uart_send_string("\r\n");
+
+	return real_pressure;
+}
+
+
+
+int main(void) {
+	// Initialize UART and I2C
+	uart_init(MYUBRR);
+	i2c_init();
+	bmp280_init();
+
+	
+
+	while (1) {
+		float temp = bmp280_read_temperature();
+		float pressure = bmp280_read_pressure();
+
+		
+
+		
+		
+
+		_delay_ms(1000);  // Delay 1 second between readings
+	}
+}
